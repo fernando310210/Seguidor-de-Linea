@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Cómo funciona? · Seguidor de Línea</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="top"><div class="in">
+  <a class="marca" href="index.html">🤖 Seguidor de Línea</a>
+  <a href="index.html">Inicio</a>
+  <a class="activo" href="como-funciona.html">¿Cómo funciona?</a>
+  <a href="ensamble.html">Ensamble</a>
+  <a href="programacion.html">Programación</a>
+  <a href="comunidad.html">Comunidad</a>
+</div></nav>
+
+<header class="hero">
+  <span class="fase">Fase 2 · Revisión conceptual</span>
+  <h1>¿Cómo funciona?</h1>
+  <p>Cómo "ve" la línea, cómo se protege el circuito y cómo decide hacia dónde moverse</p>
+</header>
+
+<main>
+  <div class="reto">
+    <strong>🎯 Antes de la competencia</strong><br>
+    Antes de armar nada, tu equipo tiene que responder tres preguntas: ¿cómo sabe el robot dónde está la línea?,
+    ¿cómo evitamos quemar los componentes? y ¿cómo decide si seguir derecho o girar?
+    Este módulo responde las tres.
+  </div>
+
+  <!-- 1. SENSOR -->
+  <section class="caja">
+    <h2>1. ¿Cómo "ve" la línea? El sensor infrarrojo</h2>
+    <p>El robot no tiene cámara. Usa un <strong>sensor infrarrojo de reflexión</strong> que tiene dos partes:
+      un <strong>LED infrarrojo</strong> que emite luz (invisible para nosotros) y un <strong>fototransistor</strong> que detecta cuánta de esa luz vuelve.</p>
+    <p>Una superficie <strong>blanca refleja</strong> casi toda la luz; una <strong>negra la absorbe</strong>. Probalo:</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
+      <button id="bBlanco" onclick="superficie('blanco')">Superficie blanca</button>
+      <button id="bNegro" class="sec" onclick="superficie('negro')">Superficie negra</button>
+    </div>
+    <svg viewBox="0 0 400 230" style="width:100%;max-width:520px;display:block" role="img" aria-label="Esquema del sensor infrarrojo sobre la superficie">
+      <rect x="110" y="20" width="180" height="50" rx="6" fill="#2b3445"/>
+      <circle cx="160" cy="70" r="12" fill="#c0392b"/>
+      <text x="160" y="105" text-anchor="middle" font-size="12" fill="currentColor">LED IR</text>
+      <rect x="228" y="60" width="24" height="18" rx="3" fill="#34495e"/>
+      <text x="240" y="105" text-anchor="middle" font-size="12" fill="currentColor">Fototransistor</text>
+      <line x1="162" y1="82" x2="200" y2="180" stroke="#e74c3c" stroke-width="3" stroke-dasharray="6 4"/>
+      <line id="rayo" x1="200" y1="180" x2="238" y2="80" stroke="#e74c3c" stroke-width="3" stroke-dasharray="6 4"/>
+      <rect id="piso" x="40" y="180" width="320" height="40" fill="#ffffff" stroke="#999"/>
+    </svg>
+    <p class="res" id="lectura"></p>
+  </section>
+
+  <!-- VIDEO -->
+  <section class="caja">
+    <h2>🎬 Miralo en el simulador</h2>
+    <p>En este video vas a ver el sensor funcionando en Tinkercad y cómo cambia la lectura al pasar de blanco a negro.</p>
+    <div class="video">
+      <!-- Cuando subas el video a YouTube (como "no listado"), reemplazá este texto por:
+           <iframe src="https://www.youtube.com/embed/CODIGO_DEL_VIDEO" title="Sensor infrarrojo en Tinkercad" allowfullscreen></iframe> -->
+      🎥 Video en producción (3 a 5 minutos)
+    </div>
+  </section>
+
+  <!-- 2. OHM -->
+  <section class="caja">
+    <h2>2. ¿Cómo no quemar el LED? La Ley de Ohm</h2>
+    <p>Un LED no puede conectarse directo a 5 V: dejaría pasar demasiada corriente y se quemaría.
+      Por eso se coloca una <strong>resistencia en serie</strong> que limita la corriente. La Ley de Ohm nos dice cuánto vale:</p>
+    <p style="text-align:center;font-size:1.3rem;font-weight:700">R = (V<sub>fuente</sub> − V<sub>LED</sub>) / I</p>
+    <p>La tensión de la fuente es la de Arduino (5 V). El LED "se queda" con una parte, que llamamos caída de tensión
+      (en un LED infrarrojo ronda 1,2 V). Lo que sobra cae en la resistencia.</p>
+    <label for="vf">Tensión de la fuente (V)</label>
+    <input id="vf" type="number" value="5" step="0.1">
+    <label for="vl">Caída de tensión del LED (V)</label>
+    <input id="vl" type="number" value="1.2" step="0.1">
+    <label for="ma">Corriente deseada (mA)</label>
+    <input id="ma" type="number" value="20" step="1">
+    <div style="margin-top:14px"><button onclick="calcular()">Calcular resistencia</button></div>
+    <p class="res" id="resOhm"></p>
+  </section>
+
+  <!-- 3. DECISION -->
+  <section class="caja">
+    <h2>3. ¿Cómo decide hacia dónde ir? Sensores y motores</h2>
+    <p>El robot lleva <strong>dos sensores</strong>, uno a cada lado de la línea. Mientras ninguno ve negro, la línea está en el medio y el robot avanza.
+      Si un sensor "pisa" la línea, el robot gira hacia ese lado para volver a centrarla.</p>
+    <p>Arduino no puede mover los motores directamente (no entrega suficiente corriente). Por eso usa un <strong>puente H</strong>:
+      un circuito que funciona como un conjunto de interruptores y permite encender cada motor y elegir su sentido de giro.</p>
+    <p><strong>Probá:</strong> tocá cada sensor para ponerlo sobre la línea negra o fuera de ella.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
+      <button id="sIzq" class="sec" onclick="toggle('izq')">Sensor izquierdo: blanco</button>
+      <button id="sDer" class="sec" onclick="toggle('der')">Sensor derecho: blanco</button>
+    </div>
+    <svg viewBox="0 0 300 200" style="width:100%;max-width:380px;display:block" role="img" aria-label="Robot visto desde arriba">
+      <g id="robot" style="transition:transform .4s" transform-origin="150 110">
+        <rect x="105" y="60" width="90" height="100" rx="12" fill="#0a7bbd"/>
+        <rect x="88" y="95" width="14" height="40" rx="3" fill="#2b3445"/>
+        <rect x="198" y="95" width="14" height="40" rx="3" fill="#2b3445"/>
+        <circle id="ledIzq" cx="128" cy="68" r="8" fill="#fff" stroke="#2b3445" stroke-width="2"/>
+        <circle id="ledDer" cx="172" cy="68" r="8" fill="#fff" stroke="#2b3445" stroke-width="2"/>
+        <polygon points="150,30 138,52 162,52" fill="#f4a300"/>
+      </g>
+    </svg>
+    <p class="res" id="decision"></p>
+    <details><summary>¿Ves la lógica? Así se escribe en un programa</summary>
+<pre style="overflow-x:auto;font-size:.9rem">si (izquierdo ve negro Y derecho ve negro)  → detenerse
+si no, si (izquierdo ve negro)              → girar a la izquierda
+si no, si (derecho ve negro)                → girar a la derecha
+si no                                       → avanzar</pre>
+      Esto es una <strong>estructura condicional</strong>. En el módulo de Programación la vas a escribir en Arduino.
+    </details>
+    <details><summary>🏁 ¿Y los robots de competencia?</summary>
+      Con dos sensores el robot sigue la línea, pero "zigzaguea" y pierde tiempo. Los robots de competencia usan
+      una <strong>barra de varios sensores</strong> (5 a 8) para saber <em>cuánto</em> se desvió de la línea, y regulan
+      la velocidad de cada motor con <strong>PWM</strong> en lugar de solo encenderlos o apagarlos. Así pueden tomar
+      las curvas sin frenar. Es el paso que vas a dar en el módulo de Programación.
+    </details>
+  </section>
+
+  <!-- GLOSARIO -->
+  <section class="caja">
+    <h2>📖 Glosario</h2>
+    <details><summary>LED infrarrojo (IR)</summary>Diodo que emite luz infrarroja, invisible para el ojo humano pero detectable por sensores.</details>
+    <details><summary>Fototransistor</summary>Componente que deja pasar más o menos corriente según la cantidad de luz que recibe.</details>
+    <details><summary>CNY70 / TCRT5000</summary>Modelos comerciales de sensor de reflexión que traen el LED IR y el fototransistor en una misma pieza.</details>
+    <details><summary>Ley de Ohm</summary>Relación entre tensión (V), corriente (I) y resistencia (R): V = I × R.</details>
+    <details><summary>Puente H</summary>Circuito (por ejemplo L293D o L298N) que permite controlar el encendido y el sentido de giro de un motor de corriente continua.</details>
+    <details><summary>PWM</summary>Modulación por ancho de pulso: una forma de regular la velocidad del motor encendiéndolo y apagándolo muy rápido.</details>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="caja">
+    <h2>✅ Autoevaluación</h2>
+    <p>Respondé y vas a ver la explicación al instante.</p>
+    <div id="quiz"></div>
+    <p class="res" id="puntaje"></p>
+  </section>
+
+  <div class="pasos">
+    <a href="index.html">← Inicio</a>
+    <a href="ensamble.html">Siguiente: Guía de ensamble →</a>
+  </div>
+</main>
+
+<footer>
+  Ing. Fernando Ferrer · Maestría en Educación y Tecnologías Digitales (UNRaf–UNER) · Prototipo 2026
+</footer>
+
+<script>
+// 1. Sensor
+function superficie(tipo){
+  var blanco = tipo === 'blanco';
+  document.getElementById('piso').setAttribute('fill', blanco ? '#ffffff' : '#111111');
+  var r = document.getElementById('rayo');
+  r.setAttribute('opacity', blanco ? '1' : '0.12');
+  document.getElementById('bBlanco').className = blanco ? '' : 'sec';
+  document.getElementById('bNegro').className = blanco ? 'sec' : '';
+  document.getElementById('lectura').textContent = blanco
+    ? 'Superficie blanca: la luz rebota y llega al fototransistor → el sensor detecta MUCHA luz.'
+    : 'Superficie negra: la luz se absorbe y casi no vuelve → el sensor detecta POCA luz. ¡Encontró la línea!';
+}
+superficie('blanco');
+
+// 2. Ohm
+var E12 = [1,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2];
+function comercial(r){
+  var d = Math.pow(10, Math.floor(Math.log10(r)));
+  for (var k = 0; k < 2; k++){
+    for (var i = 0; i < E12.length; i++){ var v = E12[i]*d; if (v >= r - 1e-9) return v; }
+    d *= 10;
+  }
+  return r;
+}
+function calcular(){
+  var vf = parseFloat(document.getElementById('vf').value);
+  var vl = parseFloat(document.getElementById('vl').value);
+  var i = parseFloat(document.getElementById('ma').value) / 1000;
+  var out = document.getElementById('resOhm');
+  if (!(vf > 0) || !(vl >= 0) || !(i > 0)) { out.textContent = 'Revisá los valores: deben ser mayores a cero.'; return; }
+  if (vl >= vf) { out.textContent = 'La caída del LED tiene que ser menor que la tensión de la fuente.'; return; }
+  var r = (vf - vl) / i;
+  var c = comercial(r);
+  out.textContent = 'R = (' + vf + ' − ' + vl + ') / ' + i + ' A = ' + r.toFixed(0) +
+    ' Ω  →  usá el valor comercial ' + (c >= 1000 ? (c/1000) + ' kΩ' : c.toFixed(0) + ' Ω') +
+    ' (siempre el inmediato superior, así la corriente queda un poco por debajo del límite).';
+}
+
+// 3. Decision
+var est = {izq:false, der:false};
+function toggle(lado){
+  est[lado] = !est[lado];
+  var b = document.getElementById(lado === 'izq' ? 'sIzq' : 'sDer');
+  b.textContent = 'Sensor ' + (lado === 'izq' ? 'izquierdo' : 'derecho') + ': ' + (est[lado] ? 'NEGRO' : 'blanco');
+  b.className = est[lado] ? '' : 'sec';
+  document.getElementById(lado === 'izq' ? 'ledIzq' : 'ledDer').setAttribute('fill', est[lado] ? '#111' : '#fff');
+  decidir();
+}
+function decidir(){
+  var t, ang = 0;
+  if (est.izq && est.der){ t = '⏹️ Ambos ven negro (cruce o fin de pista): el robot se DETIENE. Los dos motores se apagan.'; }
+  else if (est.izq){ t = '↖️ La línea quedó a la izquierda: el robot GIRA A LA IZQUIERDA. Se frena el motor izquierdo y sigue el derecho.'; ang = -25; }
+  else if (est.der){ t = '↗️ La línea quedó a la derecha: el robot GIRA A LA DERECHA. Se frena el motor derecho y sigue el izquierdo.'; ang = 25; }
+  else { t = '⬆️ Ninguno ve negro: la línea está en el centro y el robot AVANZA. Ambos motores giran hacia adelante.'; }
+  document.getElementById('robot').setAttribute('transform', 'rotate(' + ang + ' 150 110)');
+  document.getElementById('decision').textContent = t;
+}
+decidir();
+
+// Quiz
+var preguntas = [
+  {p:'¿Por qué el sensor puede distinguir la línea negra del piso blanco?',
+   o:['Porque mide la temperatura de la superficie','Porque el negro absorbe la luz infrarroja y el blanco la refleja','Porque el LED cambia de color'], c:1,
+   e:'El fototransistor recibe mucha luz reflejada sobre blanco y muy poca sobre negro.'},
+  {p:'Con una fuente de 5 V, un LED con caída de 1,2 V y una corriente de 20 mA, ¿qué resistencia necesitás?',
+   o:['Unos 60 Ω','Unos 190 Ω (se usa 220 Ω)','Unos 1.000 Ω'], c:1,
+   e:'R = (5 − 1,2) / 0,02 = 190 Ω. Se elige el valor comercial superior: 220 Ω.'},
+  {p:'¿Para qué sirve el puente H?',
+   o:['Para leer los sensores','Para alimentar al Arduino','Para que Arduino controle el encendido y el sentido de giro de los motores'], c:2,
+   e:'Arduino da muy poca corriente; el puente H maneja la potencia de los motores siguiendo sus órdenes.'},
+  {p:'Si solo el sensor derecho ve negro, ¿qué hace el robot?',
+   o:['Gira a la derecha','Gira a la izquierda','Se detiene'], c:0,
+   e:'La línea se corrió hacia la derecha, así que el robot gira hacia ese lado para volver a centrarla.'}
+];
+var aciertos = 0, respondidas = 0;
+var qz = document.getElementById('quiz');
+preguntas.forEach(function(q, n){
+  var d = document.createElement('div'); d.className = 'pregunta';
+  var h = document.createElement('p'); h.textContent = (n+1) + '. ' + q.p; d.appendChild(h);
+  var fb = document.createElement('div'); fb.className = 'fb';
+  q.o.forEach(function(txt, k){
+    var b = document.createElement('button'); b.className = 'opc'; b.textContent = txt;
+    b.onclick = function(){
+      if (d.dataset.ok) return; d.dataset.ok = '1'; respondidas++;
+      var bien = k === q.c; if (bien) aciertos++;
+      b.classList.add(bien ? 'ok' : 'mal');
+      d.querySelectorAll('.opc')[q.c].classList.add('ok');
+      fb.textContent = (bien ? '¡Correcto! ' : 'No exactamente. ') + q.e;
+      if (respondidas === preguntas.length)
+        document.getElementById('puntaje').textContent = 'Resultado: ' + aciertos + ' de ' + preguntas.length +
+          (aciertos === preguntas.length ? ' 🎉 ¡Listo para el ensamble!' : ' · Repasá las secciones y volvé a intentarlo recargando la página.');
+    };
+    d.appendChild(b);
+  });
+  d.appendChild(fb); qz.appendChild(d);
+});
+</script>
+</body>
+</html>
