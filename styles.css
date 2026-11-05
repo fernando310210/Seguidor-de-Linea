@@ -61,3 +61,29 @@ svg text{font-family:system-ui,sans-serif}
 .audio-hero p{margin:0 0 6px;font-weight:600}
 .audio-hero audio{width:100%}
 @media (max-width:520px){.logos{justify-content:center}.logos img{height:42px}.logos img[alt*="Entre"]{height:48px}}
+
+/* Simulación */
+.sim{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;margin-top:14px}
+@media (max-width:860px){.sim{grid-template-columns:1fr}}
+.sim-pista canvas{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:8px;background:#f7f7f4}
+.sim-controles{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-top:12px}
+.sim-controles label{display:flex;align-items:center;gap:6px;margin:0;font-weight:600;font-size:.93rem}
+.sim-controles select{padding:7px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:.95rem}
+.sim-check{font-weight:400 !important}
+button:disabled{opacity:.45;cursor:not-allowed}
+.sim-estado{margin:10px 0 0;font-size:.95rem;font-weight:600;color:var(--accent)}
+.sim-panel{font-size:.92rem}
+.sim-tiempo{display:flex;justify-content:space-between;align-items:baseline;border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:12px;background:var(--bg)}
+.sim-tiempo strong{font-size:1.5rem;font-variant-numeric:tabular-nums}
+.sim-tabla{width:100%;border-collapse:collapse;margin-bottom:6px}
+.sim-tabla th,.sim-tabla td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)}
+.sim-tabla th{font-size:.8rem;color:var(--muted);font-weight:600}
+.sim-tabla td:nth-child(2){font-variant-numeric:tabular-nums}
+.sim-tabla td.neg{color:var(--bad);font-weight:700}
+.sim-tabla td.on{color:var(--ok);font-weight:700}
+.sim-nota{margin:0 0 12px;font-size:.82rem;color:var(--muted)}
+.sim-sub{margin:12px 0 4px;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.sim-codigo{margin:0;padding:6px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-family:ui-monospace,Consolas,monospace;font-size:.8rem;line-height:1.5}
+.sim-codigo span{display:block;padding:3px 6px;border-radius:4px}
+.sim-codigo span.activa{background:var(--accent);color:#fff}
+.sim-monitor{margin:0;padding:8px 10px;border-radius:8px;background:#12161d;color:#9ee6a8;font-size:.8rem;min-height:9.5em;tab-size:8;overflow-x:auto}

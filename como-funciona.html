@@ -58,15 +58,73 @@
     <p class="res" id="lectura"></p>
   </section>
 
-  <!-- VIDEO -->
-  <section class="caja">
-    <h2>Miralo en el simulador</h2>
-    <p>En este video vas a ver el sensor funcionando en Tinkercad y cómo cambia la lectura al pasar de blanco a negro.</p>
-    <div class="video">
-      <!-- Cuando subas el video a YouTube (como "no listado"), reemplazá este texto por:
-           <iframe src="https://www.youtube.com/embed/CODIGO_DEL_VIDEO" title="Sensor infrarrojo en Tinkercad" allowfullscreen></iframe> -->
-      Video en producción (3 a 5 minutos)
+  <!-- SIMULACIÓN -->
+  <section class="caja" id="simulacion">
+    <h2>Simulación: el robot en la pista</h2>
+    <p>Este simulador aplica exactamente la lógica de los dos sensores: cada sensor lee la superficie, el programa compara
+      la lectura con un umbral y decide qué motor encender. Iniciá la simulación, observá las lecturas y cambiá la velocidad
+      para ver qué ocurre en las curvas cerradas.</p>
+
+    <div class="sim">
+      <div class="sim-pista">
+        <canvas id="simCanvas" width="800" height="450" aria-label="Simulación de un robot seguidor de línea recorriendo una pista"></canvas>
+        <div class="sim-controles">
+          <button id="simPlay" type="button">Iniciar</button>
+          <button id="simReset" type="button" class="sec">Reiniciar</button>
+          <label class="sim-vel">Velocidad
+            <select id="simVel">
+              <option value="70">Baja</option>
+              <option value="120" selected>Media</option>
+              <option value="190">Alta</option>
+            </select>
+          </label>
+          <label class="sim-check"><input type="checkbox" id="simRayos" checked> Mostrar zona de lectura</label>
+        </div>
+        <p class="sim-estado" id="simEstado">Listo para largar. Presioná "Iniciar".</p>
+      </div>
+
+      <div class="sim-panel">
+        <div class="sim-tiempo"><span>Tiempo</span><strong id="simTiempo">0,0 s</strong></div>
+
+        <table class="sim-tabla">
+          <thead><tr><th></th><th>Lectura</th><th>Superficie</th></tr></thead>
+          <tbody>
+            <tr><td>Sensor izquierdo</td><td id="lecIzq">—</td><td id="supIzq">—</td></tr>
+            <tr><td>Sensor derecho</td><td id="lecDer">—</td><td id="supDer">—</td></tr>
+          </tbody>
+        </table>
+        <p class="sim-nota">Umbral: 512. Lectura mayor al umbral = línea negra.</p>
+
+        <table class="sim-tabla">
+          <thead><tr><th></th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td>Motor izquierdo</td><td id="motIzq">Detenido</td></tr>
+            <tr><td>Motor derecho</td><td id="motDer">Detenido</td></tr>
+          </tbody>
+        </table>
+
+        <p class="sim-sub">Instrucción en ejecución</p>
+        <div class="sim-codigo">
+          <span id="c0">si (izquierdo y derecho = negro) → detenerse</span>
+          <span id="c1">si no, si (izquierdo = negro) → girar a la izquierda</span>
+          <span id="c2">si no, si (derecho = negro) → girar a la derecha</span>
+          <span id="c3">si no → avanzar</span>
+        </div>
+
+        <p class="sim-sub">Monitor serie</p>
+        <pre class="sim-monitor" id="simMonitor"></pre>
+      </div>
     </div>
+
+    <details>
+      <summary>Para analizar</summary>
+      <ul>
+        <li>¿Por qué el robot avanza "zigzagueando" en lugar de ir derecho sobre la línea?</li>
+        <li>¿Qué pasa en la curva más cerrada cuando la velocidad es alta? ¿Por qué ocurre?</li>
+        <li>¿Por qué se detiene al llegar a la franja de meta? Revisá la primera condición del programa.</li>
+        <li>Si fueras parte de un equipo de competencia, ¿qué cambiarías para bajar el tiempo sin salirte de la pista?</li>
+      </ul>
+    </details>
   </section>
 
   <!-- 2. OHM -->
@@ -251,6 +309,226 @@ preguntas.forEach(function(q, n){
   });
   d.appendChild(fb); qz.appendChild(d);
 });
+
+// ===== Simulación del seguidor de línea =====
+(function(){
+  var cv = document.getElementById('simCanvas');
+  if (!cv) return;
+  var W = 800, H = 450, ctx = cv.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // --- Pista: spline cerrada (Catmull-Rom) ---
+  var ctrl = [[110,240],[150,110],[290,70],[400,150],[480,95],[640,70],[715,170],[690,330],[560,385],[430,330],[300,385],[160,370]];
+  var pista = [];
+  (function(){
+    var n = ctrl.length, pasos = 40;
+    for (var i = 0; i < n; i++){
+      var p0 = ctrl[(i-1+n)%n], p1 = ctrl[i], p2 = ctrl[(i+1)%n], p3 = ctrl[(i+2)%n];
+      for (var s = 0; s < pasos; s++){
+        var t = s/pasos, t2 = t*t, t3 = t2*t;
+        pista.push([
+          0.5*((2*p1[0]) + (-p0[0]+p2[0])*t + (2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2 + (-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),
+          0.5*((2*p1[1]) + (-p0[1]+p2[1])*t + (2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2 + (-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)
+        ]);
+      }
+    }
+  })();
+  var ANCHO_LINEA = 18;
+
+  // Punto de largada / meta
+  var iM = 0, pm = pista[iM], pn = pista[iM+3];
+  var angM = Math.atan2(pn[1]-pm[1], pn[0]-pm[0]);
+
+  // --- Lienzo oculto con la pista (para leer los sensores) ---
+  var off = document.createElement('canvas'); off.width = W; off.height = H;
+  var oc = off.getContext('2d');
+  function dibujarPista(c, conDetalles){
+    c.fillStyle = '#f7f7f4'; c.fillRect(0, 0, W, H);
+    if (conDetalles){
+      c.strokeStyle = '#e6e6e0'; c.lineWidth = 1;
+      for (var x = 0; x < W; x += 40){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke(); }
+      for (var y = 0; y < H; y += 40){ c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke(); }
+    }
+    c.strokeStyle = '#111'; c.lineWidth = ANCHO_LINEA; c.lineJoin = 'round'; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(pista[0][0], pista[0][1]);
+    for (var i = 1; i < pista.length; i++) c.lineTo(pista[i][0], pista[i][1]);
+    c.closePath(); c.stroke();
+    // franja de meta (perpendicular a la línea)
+    c.save(); c.translate(pm[0], pm[1]); c.rotate(angM);
+    c.fillStyle = '#111'; c.fillRect(-7, -34, 14, 68);
+    if (conDetalles){
+      c.rotate(-angM); c.fillStyle = '#555'; c.font = '600 12px system-ui, sans-serif'; c.textAlign = 'right';
+      c.fillText('LARGADA', -40, -2); c.fillText('META', -40, 12);
+    }
+    c.restore();
+  }
+  dibujarPista(oc, false);
+  var pix = oc.getImageData(0, 0, W, H).data;
+  function oscuro(x, y){
+    x = Math.round(x); y = Math.round(y);
+    if (x < 0 || y < 0 || x >= W || y >= H) return 0;
+    var k = (y*W + x)*4; return 1 - (pix[k] + pix[k+1] + pix[k+2]) / 765;
+  }
+  // lectura analógica estilo analogRead (0-1023): promedio de una pequeña zona
+  function leer(x, y){
+    var s = 0, n = 0;
+    for (var dx = -3; dx <= 3; dx += 1.5) for (var dy = -3; dy <= 3; dy += 1.5){ s += oscuro(x+dx, y+dy); n++; }
+    var v = 90 + (s/n) * 830 + (Math.random()-0.5) * 30;
+    return Math.max(0, Math.min(1023, Math.round(v)));
+  }
+  function distPista(x, y){
+    var m = 1e9;
+    for (var i = 0; i < pista.length; i += 2){ var dx = pista[i][0]-x, dy = pista[i][1]-y, d = dx*dx+dy*dy; if (d < m) m = d; }
+    return Math.sqrt(m);
+  }
+
+  // --- Robot ---
+  var EJE = 30, ADEL = 24, SEP = 13;   // distancia entre ruedas, sensores adelante del eje, separación lateral
+  var UMBRAL = 512;
+  var CICLO = 0.03, TAU = 0.16;   // ciclo del programa (s) e inercia de los motores (s)
+  var rueda = {izq:0, der:0}, tCiclo = 0;
+  var r, corriendo = false, terminado = false, tiempo = 0, recorrido = 0, ultimoLog = 0, ultimoT = null;
+  var lec = {izq:0, der:0}, mot = {izq:0, der:0}, regla = 3;
+  var el = function(id){ return document.getElementById(id); };
+  var monitor = [];
+
+  function reiniciar(){
+    var p = pista[iM+6];
+    r = {x: p[0], y: p[1], a: angM};
+    corriendo = false; terminado = false; tiempo = 0; recorrido = 0; ultimoLog = 0; monitor = [];
+    mot.izq = mot.der = 0; rueda.izq = rueda.der = 0; tCiclo = 0; regla = 3;
+    sensar(); actualizarPanel();
+    el('simPlay').textContent = 'Iniciar'; el('simPlay').disabled = false;
+    el('simEstado').textContent = 'Listo para largar. Presioná "Iniciar".';
+    el('simMonitor').textContent = 'izq\tder\tdecisión';
+    dibujar();
+  }
+  function posSensores(){
+    var c = Math.cos(r.a), s = Math.sin(r.a);
+    var fx = r.x + c*ADEL, fy = r.y + s*ADEL;
+    return {izq: [fx + s*SEP, fy - c*SEP], der: [fx - s*SEP, fy + c*SEP]};
+  }
+  function sensar(){
+    var ps = posSensores();
+    lec.izq = leer(ps.izq[0], ps.izq[1]); lec.der = leer(ps.der[0], ps.der[1]);
+  }
+  var NOMBRES = ['detenerse', 'girar a la izquierda', 'girar a la derecha', 'avanzar'];
+  function decidir(v){
+    var ni = lec.izq > UMBRAL, nd = lec.der > UMBRAL;
+    if (ni && nd && recorrido > 300 && Math.hypot(r.x-pm[0], r.y-pm[1]) < 45){ regla = 0; mot.izq = 0; mot.der = 0; }
+    else if (ni && !nd){ regla = 1; mot.izq = 0; mot.der = v; }
+    else if (nd && !ni){ regla = 2; mot.izq = v; mot.der = 0; }
+    else { regla = 3; mot.izq = v; mot.der = v; }
+  }
+  function paso(dt){
+    var v = parseFloat(el('simVel').value);
+    tCiclo -= dt;
+    if (tCiclo <= 0){ sensar(); decidir(v); tCiclo += CICLO; }
+    var kk = 1 - Math.exp(-dt / TAU);
+    rueda.izq += (mot.izq - rueda.izq) * kk; rueda.der += (mot.der - rueda.der) * kk;
+    if (regla === 0){
+      corriendo = false; terminado = true;
+      el('simEstado').textContent = 'Llegó a la meta: ambos sensores detectaron negro y el robot se detuvo. Tiempo de vuelta: ' + fmt(tiempo) + '.';
+      el('simPlay').textContent = 'Iniciar'; el('simPlay').disabled = true;
+      log(true); return;
+    }
+    var avance = (rueda.izq + rueda.der) / 2;
+    r.a += (rueda.izq - rueda.der) / EJE * dt;   // motor izquierdo detenido -> gira a la izquierda
+    r.x += Math.cos(r.a) * avance * dt; r.y += Math.sin(r.a) * avance * dt;
+    recorrido += avance * dt; tiempo += dt;
+    if (distPista(r.x, r.y) > 48){
+      corriendo = false; terminado = true;
+      el('simEstado').textContent = 'El robot se salió de la pista. A esta velocidad no alcanza a corregir en la curva: probá con una velocidad menor y presioná "Reiniciar".';
+      el('simPlay').textContent = 'Iniciar'; el('simPlay').disabled = true;
+    }
+  }
+  function fmt(t){ return t.toFixed(1).replace('.', ',') + ' s'; }
+  function log(forzar){
+    if (!forzar && tiempo - ultimoLog < 0.25) return;
+    ultimoLog = tiempo;
+    monitor.push(lec.izq + '\t' + lec.der + '\t' + NOMBRES[regla]);
+    if (monitor.length > 7) monitor.shift();
+    el('simMonitor').textContent = 'izq\tder\tdecisión\n' + monitor.join('\n');
+  }
+  function estadoMotor(v){ return v > 0 ? 'Adelante' : 'Detenido'; }
+  function actualizarPanel(){
+    el('lecIzq').textContent = lec.izq; el('lecDer').textContent = lec.der;
+    el('supIzq').textContent = lec.izq > UMBRAL ? 'Negro' : 'Blanco';
+    el('supDer').textContent = lec.der > UMBRAL ? 'Negro' : 'Blanco';
+    el('supIzq').className = lec.izq > UMBRAL ? 'neg' : '';
+    el('supDer').className = lec.der > UMBRAL ? 'neg' : '';
+    el('motIzq').textContent = estadoMotor(mot.izq); el('motDer').textContent = estadoMotor(mot.der);
+    el('motIzq').className = mot.izq > 0 ? 'on' : ''; el('motDer').className = mot.der > 0 ? 'on' : '';
+    for (var i = 0; i < 4; i++) el('c'+i).className = (i === regla && (corriendo || terminado)) ? 'activa' : '';
+    el('simTiempo').textContent = fmt(tiempo);
+  }
+
+  // --- Dibujo ---
+  var fondo = document.createElement('canvas'); fondo.width = W*dpr; fondo.height = H*dpr;
+  var fc = fondo.getContext('2d'); fc.setTransform(dpr,0,0,dpr,0,0); dibujarPista(fc, true);
+  var rastro = [];
+  function dibujar(){
+    ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(fondo, 0, 0); ctx.setTransform(dpr,0,0,dpr,0,0);
+    // rastro
+    if (rastro.length > 1){
+      ctx.strokeStyle = 'rgba(10,123,189,.45)'; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(rastro[0][0], rastro[0][1]);
+      for (var i = 1; i < rastro.length; i++) ctx.lineTo(rastro[i][0], rastro[i][1]);
+      ctx.stroke();
+    }
+    var ps = posSensores();
+    ctx.save(); ctx.translate(r.x, r.y); ctx.rotate(r.a);
+    // ruedas
+    ctx.fillStyle = '#2b3445';
+    ctx.fillRect(-9, -EJE/2-7, 18, 7); ctx.fillRect(-9, EJE/2, 18, 7);
+    // chasis
+    ctx.fillStyle = '#0a7bbd'; ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(-14, -EJE/2+1, ADEL+20, EJE-2, 6); else ctx.rect(-14, -EJE/2+1, ADEL+20, EJE-2);
+    ctx.fill();
+    // placa de sensores
+    ctx.fillStyle = '#1d2433'; ctx.fillRect(ADEL-4, -SEP-6, 8, 2*SEP+12);
+    ctx.restore();
+    // sensores
+    [['izq', ps.izq], ['der', ps.der]].forEach(function(s){
+      var negro = lec[s[0]] > UMBRAL;
+      if (el('simRayos').checked){
+        ctx.strokeStyle = negro ? 'rgba(214,69,69,.9)' : 'rgba(31,157,85,.9)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(s[1][0], s[1][1], 6, 0, Math.PI*2); ctx.stroke();
+      }
+      ctx.fillStyle = negro ? '#d64545' : '#1f9d55';
+      ctx.beginPath(); ctx.arc(s[1][0], s[1][1], 3, 0, Math.PI*2); ctx.fill();
+    });
+  }
+
+  function bucle(ts){
+    if (corriendo){
+      if (ultimoT === null) ultimoT = ts;
+      var dt = Math.min((ts - ultimoT)/1000, 0.05); ultimoT = ts;
+      var n = Math.ceil(dt / 0.004);
+      for (var i = 0; i < n && corriendo; i++) paso(dt/n);
+      rastro.push([r.x, r.y]); if (rastro.length > 260) rastro.shift();
+      if (corriendo) log(false);
+      actualizarPanel(); dibujar();
+    } else ultimoT = null;
+    requestAnimationFrame(bucle);
+  }
+
+  el('simPlay').addEventListener('click', function(){
+    if (terminado) return;
+    corriendo = !corriendo;
+    this.textContent = corriendo ? 'Pausar' : 'Continuar';
+    el('simEstado').textContent = corriendo ? 'En carrera: el robot corrige su rumbo cada vez que un sensor detecta la línea.' : 'En pausa.';
+  });
+  el('simReset').addEventListener('click', function(){ rastro = []; reiniciar(); });
+  el('simRayos').addEventListener('change', dibujar);
+  el('simVel').addEventListener('change', function(){
+    if (!corriendo && !terminado && tiempo === 0) el('simEstado').textContent = 'Velocidad seleccionada: ' + this.options[this.selectedIndex].text.toLowerCase() + '. Presioná "Iniciar".';
+  });
+
+  reiniciar();
+  requestAnimationFrame(bucle);
+})();
 </script>
 </body>
 </html>
