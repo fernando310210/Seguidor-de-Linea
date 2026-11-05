@@ -8,7 +8,7 @@
 </head>
 <body>
 <nav class="top"><div class="in">
-  <a class="marca" href="index.html">🤖 Seguidor de Línea</a>
+  <a class="marca" href="index.html">Seguidor de Línea</a>
   <a href="index.html">Inicio</a>
   <a class="activo" href="como-funciona.html">¿Cómo funciona?</a>
   <a href="ensamble.html">Ensamble</a>
@@ -17,6 +17,11 @@
 </div></nav>
 
 <header class="hero">
+  <div class="logos">
+    <img src="img/logo-unraf.png" alt="Universidad Nacional de Rafaela (UNRaf)" onerror="this.style.display='none'">
+    <img src="img/logo-uner.png" alt="Universidad Nacional de Entre Ríos (UNER)" onerror="this.style.display='none'">
+  </div>
+  <p class="copete">Taller de Producción de Material Educativo<br><strong>Trabajo integrador</strong></p>
   <span class="fase">Fase 2 · Revisión conceptual</span>
   <h1>¿Cómo funciona?</h1>
   <p>Cómo "ve" la línea, cómo se protege el circuito y cómo decide hacia dónde moverse</p>
@@ -24,7 +29,7 @@
 
 <main>
   <div class="reto">
-    <strong>🎯 Antes de la competencia</strong><br>
+    <strong>Antes de la competencia</strong><br>
     Antes de armar nada, tu equipo tiene que responder tres preguntas: ¿cómo sabe el robot dónde está la línea?,
     ¿cómo evitamos quemar los componentes? y ¿cómo decide si seguir derecho o girar?
     Este módulo responde las tres.
@@ -55,12 +60,12 @@
 
   <!-- VIDEO -->
   <section class="caja">
-    <h2>🎬 Miralo en el simulador</h2>
+    <h2>Miralo en el simulador</h2>
     <p>En este video vas a ver el sensor funcionando en Tinkercad y cómo cambia la lectura al pasar de blanco a negro.</p>
     <div class="video">
       <!-- Cuando subas el video a YouTube (como "no listado"), reemplazá este texto por:
            <iframe src="https://www.youtube.com/embed/CODIGO_DEL_VIDEO" title="Sensor infrarrojo en Tinkercad" allowfullscreen></iframe> -->
-      🎥 Video en producción (3 a 5 minutos)
+      Video en producción (3 a 5 minutos)
     </div>
   </section>
 
@@ -106,13 +111,13 @@
     </svg>
     <p class="res" id="decision"></p>
     <details><summary>¿Ves la lógica? Así se escribe en un programa</summary>
-<pre style="overflow-x:auto;font-size:.9rem">si (izquierdo ve negro Y derecho ve negro)  → detenerse
-si no, si (izquierdo ve negro)              → girar a la izquierda
-si no, si (derecho ve negro)                → girar a la derecha
-si no                                       → avanzar</pre>
+<pre style="overflow-x:auto;font-size:.9rem">si (izquierdo ve negro Y derecho ve negro)  detenerse
+si no, si (izquierdo ve negro)              girar a la izquierda
+si no, si (derecho ve negro)                girar a la derecha
+si no                                       avanzar</pre>
       Esto es una <strong>estructura condicional</strong>. En el módulo de Programación la vas a escribir en Arduino.
     </details>
-    <details><summary>🏁 ¿Y los robots de competencia?</summary>
+    <details><summary>¿Y los robots de competencia?</summary>
       Con dos sensores el robot sigue la línea, pero "zigzaguea" y pierde tiempo. Los robots de competencia usan
       una <strong>barra de varios sensores</strong> (5 a 8) para saber <em>cuánto</em> se desvió de la línea, y regulan
       la velocidad de cada motor con <strong>PWM</strong> en lugar de solo encenderlos o apagarlos. Así pueden tomar
@@ -122,7 +127,7 @@ si no                                       → avanzar</pre>
 
   <!-- GLOSARIO -->
   <section class="caja">
-    <h2>📖 Glosario</h2>
+    <h2>Glosario</h2>
     <details><summary>LED infrarrojo (IR)</summary>Diodo que emite luz infrarroja, invisible para el ojo humano pero detectable por sensores.</details>
     <details><summary>Fototransistor</summary>Componente que deja pasar más o menos corriente según la cantidad de luz que recibe.</details>
     <details><summary>CNY70 / TCRT5000</summary>Modelos comerciales de sensor de reflexión que traen el LED IR y el fototransistor en una misma pieza.</details>
@@ -133,15 +138,15 @@ si no                                       → avanzar</pre>
 
   <!-- QUIZ -->
   <section class="caja">
-    <h2>✅ Autoevaluación</h2>
+    <h2>Autoevaluación</h2>
     <p>Respondé y vas a ver la explicación al instante.</p>
     <div id="quiz"></div>
     <p class="res" id="puntaje"></p>
   </section>
 
   <div class="pasos">
-    <a href="index.html">← Inicio</a>
-    <a href="ensamble.html">Siguiente: Guía de ensamble →</a>
+    <a href="index.html">Inicio</a>
+    <a href="ensamble.html">Siguiente: Guía de ensamble </a>
   </div>
 </main>
 
@@ -159,8 +164,8 @@ function superficie(tipo){
   document.getElementById('bBlanco').className = blanco ? '' : 'sec';
   document.getElementById('bNegro').className = blanco ? 'sec' : '';
   document.getElementById('lectura').textContent = blanco
-    ? 'Superficie blanca: la luz rebota y llega al fototransistor → el sensor detecta MUCHA luz.'
-    : 'Superficie negra: la luz se absorbe y casi no vuelve → el sensor detecta POCA luz. ¡Encontró la línea!';
+    ? 'Superficie blanca: la luz rebota y llega al fototransistor el sensor detecta MUCHA luz.'
+    : 'Superficie negra: la luz se absorbe y casi no vuelve el sensor detecta POCA luz. ¡Encontró la línea!';
 }
 superficie('blanco');
 
@@ -184,7 +189,7 @@ function calcular(){
   var r = (vf - vl) / i;
   var c = comercial(r);
   out.textContent = 'R = (' + vf + ' − ' + vl + ') / ' + i + ' A = ' + r.toFixed(0) +
-    ' Ω  →  usá el valor comercial ' + (c >= 1000 ? (c/1000) + ' kΩ' : c.toFixed(0) + ' Ω') +
+    ' Ω   usá el valor comercial ' + (c >= 1000 ? (c/1000) + ' kΩ' : c.toFixed(0) + ' Ω') +
     ' (siempre el inmediato superior, así la corriente queda un poco por debajo del límite).';
 }
 
@@ -200,10 +205,10 @@ function toggle(lado){
 }
 function decidir(){
   var t, ang = 0;
-  if (est.izq && est.der){ t = '⏹️ Ambos ven negro (cruce o fin de pista): el robot se DETIENE. Los dos motores se apagan.'; }
-  else if (est.izq){ t = '↖️ La línea quedó a la izquierda: el robot GIRA A LA IZQUIERDA. Se frena el motor izquierdo y sigue el derecho.'; ang = -25; }
-  else if (est.der){ t = '↗️ La línea quedó a la derecha: el robot GIRA A LA DERECHA. Se frena el motor derecho y sigue el izquierdo.'; ang = 25; }
-  else { t = '⬆️ Ninguno ve negro: la línea está en el centro y el robot AVANZA. Ambos motores giran hacia adelante.'; }
+  if (est.izq && est.der){ t = 'Ambos ven negro (cruce o fin de pista): el robot se DETIENE. Los dos motores se apagan.'; }
+  else if (est.izq){ t = 'La línea quedó a la izquierda: el robot GIRA A LA IZQUIERDA. Se frena el motor izquierdo y sigue el derecho.'; ang = -25; }
+  else if (est.der){ t = 'La línea quedó a la derecha: el robot GIRA A LA DERECHA. Se frena el motor derecho y sigue el izquierdo.'; ang = 25; }
+  else { t = 'Ninguno ve negro: la línea está en el centro y el robot AVANZA. Ambos motores giran hacia adelante.'; }
   document.getElementById('robot').setAttribute('transform', 'rotate(' + ang + ' 150 110)');
   document.getElementById('decision').textContent = t;
 }
@@ -240,7 +245,7 @@ preguntas.forEach(function(q, n){
       fb.textContent = (bien ? '¡Correcto! ' : 'No exactamente. ') + q.e;
       if (respondidas === preguntas.length)
         document.getElementById('puntaje').textContent = 'Resultado: ' + aciertos + ' de ' + preguntas.length +
-          (aciertos === preguntas.length ? ' 🎉 ¡Listo para el ensamble!' : ' · Repasá las secciones y volvé a intentarlo recargando la página.');
+          (aciertos === preguntas.length ? ' ¡Listo para el ensamble!' : ' · Repasá las secciones y volvé a intentarlo recargando la página.');
     };
     d.appendChild(b);
   });

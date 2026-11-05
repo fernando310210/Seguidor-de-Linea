@@ -9,7 +9,7 @@
 </head>
 <body>
 <nav class="top"><div class="in">
-  <a class="marca" href="index.html">🤖 Seguidor de Línea</a>
+  <a class="marca" href="index.html">Seguidor de Línea</a>
   <a class="activo" href="index.html">Inicio</a>
   <a href="como-funciona.html">¿Cómo funciona?</a>
   <a href="ensamble.html">Ensamble</a>
@@ -18,32 +18,36 @@
 </div></nav>
 
 <header class="hero">
+  <div class="logos">
+    <img src="img/logo-unraf.png" alt="Universidad Nacional de Rafaela (UNRaf)" onerror="this.style.display='none'">
+    <img src="img/logo-uner.png" alt="Universidad Nacional de Entre Ríos (UNER)" onerror="this.style.display='none'">
+  </div>
+  <p class="copete">Taller de Producción de Material Educativo<br><strong>Trabajo integrador</strong></p>
   <span class="fase">Fase 1 · Entorno</span>
   <h1>Robot Seguidor de Línea</h1>
   <p>Material Didáctico Digital · Tecnicatura Universitaria en Microelectrónica · UNRaf</p>
+  <div class="audio-hero">
+    <p>Escuchá la bienvenida</p>
+    <audio controls preload="metadata">
+      <source src="audio/bienvenida.mp3" type="audio/mpeg">
+      Tu navegador no puede reproducir este audio.
+    </audio>
+  </div>
 </header>
 
 <main>
   <div class="reto">
-    <strong>🎯 El reto</strong><br>
-    Una planta láctea de la región quiere automatizar el traslado de insumos: un carrito tiene que
-    recorrer el piso de la planta siguiendo una línea negra pintada, sin salirse y sin chocar.
-    Te sumás al equipo como técnico/a. Tu misión: <strong>entender, armar y programar ese robot</strong>.
-    No necesitás saber electrónica ni programación de antemano: lo vamos a construir paso a paso, en un simulador, sin riesgo de romper nada.
+    <strong>El reto</strong><br>
+    Se acerca una competencia de <strong>robots seguidores de línea</strong>: cada equipo pone su robot en una pista
+    con rectas y curvas, y gana el que la completa en el menor tiempo sin salirse.
+    Te sumás a un equipo y tu misión es <strong>entender, armar, programar y ajustar un robot capaz de competir</strong>.
+    No necesitás saber electrónica ni programación de antemano: vamos paso a paso, primero en un simulador
+    (donde podés equivocarte sin romper nada) y después en la pista.
   </div>
 
-  <section class="caja">
-    <h2>🎧 Escuchá la bienvenida</h2>
-    <p>Una presentación breve de lo que vas a aprender y cómo recorrer este material.</p>
-    <!-- Subí el archivo grabado a la carpeta "audio" del repositorio con el nombre bienvenida.mp3 -->
-    <audio controls preload="none" style="width:100%">
-      <source src="audio/bienvenida.mp3" type="audio/mpeg">
-      Tu navegador no puede reproducir este audio.
-    </audio>
-  </section>
 
   <section class="caja">
-    <h2>🗺️ Tu recorrido</h2>
+    <h2>Tu recorrido</h2>
     <p>Podés seguir el orden sugerido o ir directo al módulo que necesites.</p>
     <div class="grid">
       <a class="nodo" href="como-funciona.html"><strong>1. ¿Cómo funciona?</strong><span>Sensores, Ley de Ohm y motores</span><br><span class="badge">Disponible</span></a>
@@ -54,12 +58,13 @@
   </section>
 
   <section class="caja">
-    <h2>📌 ¿Qué vas a lograr?</h2>
+    <h2>¿Qué vas a lograr?</h2>
     <ul>
       <li>Explicar cómo un sensor infrarrojo distingue una superficie blanca de una negra.</li>
       <li>Aplicar la Ley de Ohm para elegir resistencias en un circuito real.</li>
       <li>Armar y probar el circuito del robot en Tinkercad.</li>
       <li>Escribir un programa con condicionales y bucles que controle los motores.</li>
+      <li>Calibrar y optimizar el robot para mejorar su tiempo en la pista de competencia.</li>
     </ul>
   </section>
 </main>
