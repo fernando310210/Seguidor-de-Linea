@@ -64,6 +64,9 @@
     <p>Este simulador aplica exactamente la lógica de los dos sensores: cada sensor lee la superficie, el programa compara
       la lectura con un umbral y decide qué motor encender. Iniciá la simulación, observá las lecturas y cambiá la velocidad
       para ver qué ocurre en las curvas cerradas.</p>
+    <p>También podés cambiar el <strong>tipo de pista</strong>. En competencia se usan pistas con línea negra sobre fondo
+      blanco y otras con línea blanca sobre fondo negro. La lógica del programa es la misma en los dos casos: lo único
+      que cambia es qué lectura indica que el sensor está <em>sobre la línea</em>.</p>
 
     <div class="sim">
       <div class="sim-pista">
@@ -78,6 +81,12 @@
               <option value="190">Alta</option>
             </select>
           </label>
+          <label class="sim-vel">Pista
+            <select id="simPista">
+              <option value="0" selected>Línea negra, fondo blanco</option>
+              <option value="1">Línea blanca, fondo negro</option>
+            </select>
+          </label>
           <label class="sim-check"><input type="checkbox" id="simRayos" checked> Mostrar zona de lectura</label>
         </div>
         <p class="sim-estado" id="simEstado">Listo para largar. Presioná "Iniciar".</p>
@@ -87,13 +96,13 @@
         <div class="sim-tiempo"><span>Tiempo</span><strong id="simTiempo">0,0 s</strong></div>
 
         <table class="sim-tabla">
-          <thead><tr><th></th><th>Lectura</th><th>Superficie</th></tr></thead>
+          <thead><tr><th></th><th>Lectura</th><th>Superficie</th><th>¿Sobre la línea?</th></tr></thead>
           <tbody>
-            <tr><td>Sensor izquierdo</td><td id="lecIzq">—</td><td id="supIzq">—</td></tr>
-            <tr><td>Sensor derecho</td><td id="lecDer">—</td><td id="supDer">—</td></tr>
+            <tr><td>Sensor izquierdo</td><td id="lecIzq">—</td><td id="supIzq">—</td><td id="linIzq">—</td></tr>
+            <tr><td>Sensor derecho</td><td id="lecDer">—</td><td id="supDer">—</td><td id="linDer">—</td></tr>
           </tbody>
         </table>
-        <p class="sim-nota">Umbral: 512. Lectura mayor al umbral = línea negra.</p>
+        <p class="sim-nota">Umbral: 512. Superficie negra: lectura mayor al umbral. Superficie blanca: lectura menor al umbral.</p>
 
         <table class="sim-tabla">
           <thead><tr><th></th><th>Estado</th></tr></thead>
@@ -105,11 +114,13 @@
 
         <p class="sim-sub">Instrucción en ejecución</p>
         <div class="sim-codigo">
-          <span id="c0">si (izquierdo y derecho = negro) → detenerse</span>
-          <span id="c1">si no, si (izquierdo = negro) → girar a la izquierda</span>
-          <span id="c2">si no, si (derecho = negro) → girar a la derecha</span>
+          <span class="def">sobre la línea = <b id="cDef">lectura &gt; 512</b></span>
+          <span id="c0">si (izquierdo y derecho sobre la línea) → detenerse</span>
+          <span id="c1">si no, si (izquierdo sobre la línea) → girar a la izquierda</span>
+          <span id="c2">si no, si (derecho sobre la línea) → girar a la derecha</span>
           <span id="c3">si no → avanzar</span>
         </div>
+        <p class="sim-nota">Al cambiar el tipo de pista solo cambia la primera línea: la comparación con el umbral. Las decisiones del robot no se modifican.</p>
 
         <p class="sim-sub">Monitor serie</p>
         <pre class="sim-monitor" id="simMonitor"></pre>
@@ -122,6 +133,7 @@
         <li>¿Por qué el robot avanza "zigzagueando" en lugar de ir derecho sobre la línea?</li>
         <li>¿Qué pasa en la curva más cerrada cuando la velocidad es alta? ¿Por qué ocurre?</li>
         <li>¿Por qué se detiene al llegar a la franja de meta? Revisá la primera condición del programa.</li>
+        <li>Compará las lecturas en los dos tipos de pista. ¿Qué cambió en el programa y qué se mantuvo igual? ¿Qué pasaría si no se ajustara la comparación con el umbral?</li>
         <li>Si fueras parte de un equipo de competencia, ¿qué cambiarías para bajar el tiempo sin salirte de la pista?</li>
       </ul>
     </details>
@@ -343,31 +355,34 @@ preguntas.forEach(function(q, n){
   // --- Lienzo oculto con la pista (para leer los sensores) ---
   var off = document.createElement('canvas'); off.width = W; off.height = H;
   var oc = off.getContext('2d');
+  var INV = false;   // false: línea negra sobre blanco · true: línea blanca sobre negro
   function dibujarPista(c, conDetalles){
-    c.fillStyle = '#f7f7f4'; c.fillRect(0, 0, W, H);
+    var colFondo = INV ? '#141414' : '#f7f7f4', colLinea = INV ? '#f7f7f4' : '#111';
+    c.fillStyle = colFondo; c.fillRect(0, 0, W, H);
     if (conDetalles){
-      c.strokeStyle = '#e6e6e0'; c.lineWidth = 1;
+      c.strokeStyle = INV ? '#262626' : '#e6e6e0'; c.lineWidth = 1;
       for (var x = 0; x < W; x += 40){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke(); }
       for (var y = 0; y < H; y += 40){ c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke(); }
     }
-    c.strokeStyle = '#111'; c.lineWidth = ANCHO_LINEA; c.lineJoin = 'round'; c.lineCap = 'round';
+    c.strokeStyle = colLinea; c.lineWidth = ANCHO_LINEA; c.lineJoin = 'round'; c.lineCap = 'round';
     c.beginPath(); c.moveTo(pista[0][0], pista[0][1]);
     for (var i = 1; i < pista.length; i++) c.lineTo(pista[i][0], pista[i][1]);
     c.closePath(); c.stroke();
     // franja de meta (perpendicular a la línea)
     c.save(); c.translate(pm[0], pm[1]); c.rotate(angM);
-    c.fillStyle = '#111'; c.fillRect(-7, -34, 14, 68);
+    c.fillStyle = colLinea; c.fillRect(-7, -34, 14, 68);
     if (conDetalles){
-      c.rotate(-angM); c.fillStyle = '#555'; c.font = '600 12px system-ui, sans-serif'; c.textAlign = 'right';
+      c.rotate(-angM); c.fillStyle = INV ? '#aaa' : '#555'; c.font = '600 12px system-ui, sans-serif'; c.textAlign = 'right';
       c.fillText('LARGADA', -40, -2); c.fillText('META', -40, 12);
     }
     c.restore();
   }
   dibujarPista(oc, false);
   var pix = oc.getImageData(0, 0, W, H).data;
+  function sobreLinea(v){ return INV ? v < UMBRAL : v > UMBRAL; }
   function oscuro(x, y){
     x = Math.round(x); y = Math.round(y);
-    if (x < 0 || y < 0 || x >= W || y >= H) return 0;
+    if (x < 0 || y < 0 || x >= W || y >= H) return INV ? 1 : 0;
     var k = (y*W + x)*4; return 1 - (pix[k] + pix[k+1] + pix[k+2]) / 765;
   }
   // lectura analógica estilo analogRead (0-1023): promedio de una pequeña zona
@@ -415,7 +430,7 @@ preguntas.forEach(function(q, n){
   }
   var NOMBRES = ['detenerse', 'girar a la izquierda', 'girar a la derecha', 'avanzar'];
   function decidir(v){
-    var ni = lec.izq > UMBRAL, nd = lec.der > UMBRAL;
+    var ni = sobreLinea(lec.izq), nd = sobreLinea(lec.der);
     if (ni && nd && recorrido > 300 && Math.hypot(r.x-pm[0], r.y-pm[1]) < 45){ regla = 0; mot.izq = 0; mot.der = 0; }
     else if (ni && !nd){ regla = 1; mot.izq = 0; mot.der = v; }
     else if (nd && !ni){ regla = 2; mot.izq = v; mot.der = 0; }
@@ -429,7 +444,7 @@ preguntas.forEach(function(q, n){
     rueda.izq += (mot.izq - rueda.izq) * kk; rueda.der += (mot.der - rueda.der) * kk;
     if (regla === 0){
       corriendo = false; terminado = true;
-      el('simEstado').textContent = 'Llegó a la meta: ambos sensores detectaron negro y el robot se detuvo. Tiempo de vuelta: ' + fmt(tiempo) + '.';
+      el('simEstado').textContent = 'Llegó a la meta: ambos sensores quedaron sobre la franja de meta y el robot se detuvo. Tiempo de vuelta: ' + fmt(tiempo) + '.';
       el('simPlay').textContent = 'Iniciar'; el('simPlay').disabled = true;
       log(true); return;
     }
@@ -456,8 +471,10 @@ preguntas.forEach(function(q, n){
     el('lecIzq').textContent = lec.izq; el('lecDer').textContent = lec.der;
     el('supIzq').textContent = lec.izq > UMBRAL ? 'Negro' : 'Blanco';
     el('supDer').textContent = lec.der > UMBRAL ? 'Negro' : 'Blanco';
-    el('supIzq').className = lec.izq > UMBRAL ? 'neg' : '';
-    el('supDer').className = lec.der > UMBRAL ? 'neg' : '';
+    el('linIzq').textContent = sobreLinea(lec.izq) ? 'Sí' : 'No';
+    el('linDer').textContent = sobreLinea(lec.der) ? 'Sí' : 'No';
+    el('linIzq').className = sobreLinea(lec.izq) ? 'neg' : '';
+    el('linDer').className = sobreLinea(lec.der) ? 'neg' : '';
     el('motIzq').textContent = estadoMotor(mot.izq); el('motDer').textContent = estadoMotor(mot.der);
     el('motIzq').className = mot.izq > 0 ? 'on' : ''; el('motDer').className = mot.der > 0 ? 'on' : '';
     for (var i = 0; i < 4; i++) el('c'+i).className = (i === regla && (corriendo || terminado)) ? 'activa' : '';
@@ -491,7 +508,7 @@ preguntas.forEach(function(q, n){
     ctx.restore();
     // sensores
     [['izq', ps.izq], ['der', ps.der]].forEach(function(s){
-      var negro = lec[s[0]] > UMBRAL;
+      var negro = sobreLinea(lec[s[0]]);
       if (el('simRayos').checked){
         ctx.strokeStyle = negro ? 'rgba(214,69,69,.9)' : 'rgba(31,157,85,.9)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(s[1][0], s[1][1], 6, 0, Math.PI*2); ctx.stroke();
@@ -501,12 +518,13 @@ preguntas.forEach(function(q, n){
     });
   }
 
+  var PASO = 0.004, acum = 0;   // paso fijo de simulación (s)
   function bucle(ts){
     if (corriendo){
       if (ultimoT === null) ultimoT = ts;
       var dt = Math.min((ts - ultimoT)/1000, 0.05); ultimoT = ts;
-      var n = Math.ceil(dt / 0.004);
-      for (var i = 0; i < n && corriendo; i++) paso(dt/n);
+      acum += dt;
+      while (acum >= PASO && corriendo){ paso(PASO); acum -= PASO; }
       rastro.push([r.x, r.y]); if (rastro.length > 260) rastro.shift();
       if (corriendo) log(false);
       actualizarPanel(); dibujar();
@@ -522,6 +540,18 @@ preguntas.forEach(function(q, n){
   });
   el('simReset').addEventListener('click', function(){ rastro = []; reiniciar(); });
   el('simRayos').addEventListener('change', dibujar);
+  el('simPista').addEventListener('change', function(){
+    INV = this.value === '1';
+    dibujarPista(oc, false); pix = oc.getImageData(0, 0, W, H).data;
+    fc.setTransform(1,0,0,1,0,0); fc.clearRect(0, 0, fondo.width, fondo.height); fc.setTransform(dpr,0,0,dpr,0,0);
+    dibujarPista(fc, true);
+    cv.style.background = INV ? '#141414' : '#f7f7f4';
+    el('cDef').textContent = INV ? 'lectura < 512' : 'lectura > 512';
+    rastro = []; reiniciar();
+    el('simEstado').textContent = INV
+      ? 'Pista con línea blanca sobre fondo negro. Ahora "sobre la línea" significa lectura menor al umbral. Presioná "Iniciar".'
+      : 'Pista con línea negra sobre fondo blanco. "Sobre la línea" significa lectura mayor al umbral. Presioná "Iniciar".';
+  });
   el('simVel').addEventListener('change', function(){
     if (!corriendo && !terminado && tiempo === 0) el('simEstado').textContent = 'Velocidad seleccionada: ' + this.options[this.selectedIndex].text.toLowerCase() + '. Presioná "Iniciar".';
   });

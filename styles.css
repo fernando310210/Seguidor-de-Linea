@@ -87,3 +87,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .sim-codigo span{display:block;padding:3px 6px;border-radius:4px}
 .sim-codigo span.activa{background:var(--accent);color:#fff}
 .sim-monitor{margin:0;padding:8px 10px;border-radius:8px;background:#12161d;color:#9ee6a8;font-size:.8rem;min-height:9.5em;tab-size:8;overflow-x:auto}
+
+.sim-codigo span.def{color:var(--muted);border-bottom:1px dashed var(--border);border-radius:0;margin-bottom:3px}
+.sim-codigo span.def b{color:var(--accent)}
