@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Robot Seguidor de Línea</title>
 <meta name="description" content="Material Didáctico Digital de Robótica Educativa para ingresantes a la T.U.M. (UNRaf)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -17,23 +20,68 @@
   <a href="comunidad.html">Comunidad</a>
 </div></nav>
 
-<header class="hero">
-  <div class="logos">
-    <img src="Imagen/Enc-UNRAF-web-3.png" alt="Universidad Nacional de Rafaela (UNRaf)" onerror="this.style.display='none'">
-    <img src="Imagen/Logo%20Uner%20Original.png" alt="Universidad Nacional de Entre Ríos (UNER)" onerror="this.style.display='none'">
+<div class="banda-inst">
+  <img src="Imagen/Enc-UNRAF-web-3.png" alt="Universidad Nacional de Rafaela (UNRaf)" onerror="this.style.display='none'">
+  <img src="Imagen/Logo%20Uner%20Original.png" alt="Universidad Nacional de Entre Ríos (UNER)" onerror="this.style.display='none'">
+</div>
+
+<header class="portada">
+  <div class="portada-in">
+    <div class="portada-texto">
+      <p class="portada-copete">Taller de Producción de Material Educativo<br><span>Trabajo integrador</span></p>
+      <h1>Robot seguidor de línea</h1>
+      <p class="portada-bajada">Material didáctico digital para ingresantes a la Tecnicatura Universitaria en Microelectrónica de la UNRaf.
+        Del primer sensor a la pista de competencia.</p>
+    </div>
+    <div class="portada-audio">
+      <p class="pa-titulo">Escuchá la bienvenida</p>
+      <p class="pa-desc">Presentación del docente, Ing. Fernando Ferrer (55 segundos)</p>
+      <audio controls preload="metadata">
+        <source src="Audio/bienvenida.mp3" type="audio/mpeg">
+        Tu navegador no puede reproducir este audio.
+      </audio>
+    </div>
   </div>
-  <p class="copete">Taller de Producción de Material Educativo<br><strong>Trabajo integrador</strong></p>
-  <span class="fase">Fase 1 · Entorno</span>
-  <h1>Robot Seguidor de Línea</h1>
-  <p>Material Didáctico Digital · Tecnicatura Universitaria en Microelectrónica · UNRaf</p>
-  <div class="audio-hero">
-    <p>Escuchá la bienvenida</p>
-    <audio controls preload="metadata">
-      <source src="Audio/bienvenida.mp3" type="audio/mpeg">
-      Tu navegador no puede reproducir este audio.
-    </audio>
-  </div>
+
+  <svg class="portada-pista" viewBox="0 0 1200 170" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <path id="pistaPath" d="M -900 120 L -40 120 C 160 120, 260 60, 420 70 S 660 150, 820 120 S 1020 40, 1240 60 L 2100 60"
+          fill="none" class="pp-linea" stroke-width="16" stroke-linecap="round"/>
+    <rect id="pistaMeta" class="pp-meta" x="-8" y="-36" width="16" height="72"/>
+    <g id="pistaRobot">
+      <rect x="-20" y="-24" width="20" height="7" rx="2" class="pp-rueda"/>
+      <rect x="-20" y="17" width="20" height="7" rx="2" class="pp-rueda"/>
+      <rect x="-28" y="-18" width="50" height="36" rx="8" class="pp-chasis"/>
+      <rect x="18" y="-16" width="8" height="32" rx="2" class="pp-placa"/>
+      <circle cx="26" cy="-9" r="3.2" class="pp-sensor"/>
+      <circle cx="26" cy="9" r="3.2" class="pp-sensor"/>
+    </g>
+  </svg>
 </header>
+<script>
+(function(){
+  var p = document.getElementById('pistaPath'), robot = document.getElementById('pistaRobot'), meta = document.getElementById('pistaMeta');
+  if (!p || !p.getTotalLength) return;
+  var L = p.getTotalLength(), base = 860, util = L - 860 - 860, fin = base + 0.8 * util, inicio = base + 0.04 * util;
+  function pose(d){
+    var a = p.getPointAtLength(d), b = p.getPointAtLength(Math.min(d + 1, L));
+    return {x: a.x, y: a.y, ang: Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI};
+  }
+  var m = pose(fin + 34);
+  meta.setAttribute('transform', 'translate(' + m.x + ' ' + m.y + ') rotate(' + m.ang + ')');
+  function ubicar(d){ var q = pose(d); robot.setAttribute('transform', 'translate(' + q.x + ' ' + q.y + ') rotate(' + q.ang + ')'); }
+  var quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (quieto){ ubicar(fin); return; }
+  var dur = 4200, t0 = null;
+  function cuadro(ts){
+    if (t0 === null) t0 = ts;
+    var u = Math.min((ts - t0) / dur, 1), e = 1 - Math.pow(1 - u, 3);
+    ubicar(inicio + (fin - inicio) * e);
+    if (u < 1) requestAnimationFrame(cuadro);
+  }
+  ubicar(inicio);
+  setTimeout(function(){ requestAnimationFrame(cuadro); }, 400);
+})();
+</script>
 
 <main>
   <div class="reto">
